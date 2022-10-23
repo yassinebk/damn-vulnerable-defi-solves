@@ -61,6 +61,7 @@ contract PuppetV2Pool {
     }
 
     function calculateDepositOfWETHRequired(uint256 tokenAmount) public view returns (uint256) {
+        //  
         return _getOracleQuote(tokenAmount).mul(3) / (10 ** 18);
     }
 

